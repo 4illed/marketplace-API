@@ -6,6 +6,10 @@ orders_bp = Blueprint("orders", __name__, url_prefix="/orders")
 
 
 def get_db_connection():
+    """
+    Establish a connection to the PostgreSQL database.
+    :return: A psycopg2 connection object.
+    """
     conn = psycopg2.connect(
         dbname=current_app.config["DB_NAME"],
         user=current_app.config["DB_USER"],
@@ -17,6 +21,9 @@ def get_db_connection():
 
 @orders_bp.route("", methods=["POST"])
 def create_order():
+    """
+    Create a new order in the database.
+    """
     data = request.get_json()
     # Expecting a JSON with "user_id" and "order_items" (a non-empty list)
     if not data or "user_id" not in data or "order_items" not in data:
@@ -85,6 +92,9 @@ def create_order():
 
 @orders_bp.route("/<int:order_id>", methods=["GET"])
 def get_order(order_id):
+    """
+    Get an order by its ID.
+    """
     conn = get_db_connection()
     try:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
@@ -100,3 +110,36 @@ def get_order(order_id):
         return jsonify(order), 200
     finally:
         conn.close()
+
+@orders_bp.route("/<int:order_id>/status", methods=["PATCH"])
+def update_order_status(order_id):
+    """
+    Update the status of an order by its ID.
+    """
+    data = request.get_json()
+    if not data or "status" not in data:
+        abort(400, description="Status is required")
+    
+    valid_statuses = ["новый", "в обработке", "выполнен"]
+    if data["status"] not in valid_statuses:
+        abort(400, description=f"Invalid status. Must be one of: {valid_statuses}")
+    
+    conn = get_db_connection()
+    try:
+        with conn:
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                cur.execute(
+                    """
+                    UPDATE orders SET status = %s 
+                    WHERE id = %s 
+                    RETURNING id, status;
+                    """,
+                    (data["status"], order_id),
+                )
+                result = cur.fetchone()
+                if not result:
+                    abort(404, description="Order not found")
+    finally:
+        conn.close()
+    
+    return jsonify(result), 200

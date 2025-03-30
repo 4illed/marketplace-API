@@ -4,8 +4,10 @@ from psycopg2.extras import RealDictCursor
 
 data_bp = Blueprint("data", __name__, url_prefix="/data")
 
-
 def get_db_connection():
+    """
+    Connect to the PostgreSQL database.
+    """
     conn = psycopg2.connect(
         dbname=current_app.config["DB_NAME"],
         user=current_app.config["DB_USER"],
@@ -20,6 +22,9 @@ def get_db_connection():
 
 @data_bp.route("/users", methods=["GET"])
 def get_users():
+    """
+    Retrieve all users from the database.
+    """
     conn = get_db_connection()
     try:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
@@ -32,6 +37,9 @@ def get_users():
 
 @data_bp.route("/users/<int:user_id>", methods=["GET"])
 def get_user(user_id):
+    """
+    Retrieve a specific user from the database by their ID.
+    """
     conn = get_db_connection()
     try:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
@@ -46,6 +54,9 @@ def get_user(user_id):
 
 @data_bp.route("/users", methods=["POST"])
 def create_user():
+    """
+    Create a new user
+    """
     data = request.get_json()
     required_fields = ["name", "email"]
     if not data or not all(field in data for field in required_fields):
@@ -79,6 +90,9 @@ def create_user():
 
 @data_bp.route("/users/<int:user_id>", methods=["PUT"])
 def update_user(user_id):
+    """
+    Update a specific user in the database by their ID.
+    """
     data = request.get_json()
     if not data:
         abort(400, description="No update data provided")
@@ -114,6 +128,9 @@ def update_user(user_id):
 
 @data_bp.route("/users/<int:user_id>", methods=["DELETE"])
 def delete_user(user_id):
+    """
+    Delete a specific user from the database by their ID.
+    """
     conn = get_db_connection()
     try:
         with conn:

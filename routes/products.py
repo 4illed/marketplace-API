@@ -6,6 +6,10 @@ products_bp = Blueprint("products", __name__, url_prefix="/products")
 
 
 def get_db_connection():
+    """
+    Connect to the PostgreSQL database and return a connection object.
+    :return: psycopg2.extensions.connection
+    """
     conn = psycopg2.connect(
         dbname=current_app.config["DB_NAME"],
         user=current_app.config["DB_USER"],
@@ -17,6 +21,10 @@ def get_db_connection():
 
 @products_bp.route("", methods=["GET"])
 def get_products():
+    """
+    Retrieve a list of products based on the provided query parameters.
+    :return: JSON response with a list of products
+    """
     category = request.args.get("category")
     min_price = request.args.get("min_price", type=float)
     max_price = request.args.get("max_price", type=float)
@@ -51,6 +59,9 @@ def get_products():
 
 @products_bp.route("/<int:product_id>", methods=["GET"])
 def get_product(product_id):
+    """
+    Retrieve a product by its ID
+    """
     conn = get_db_connection()
     try:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
@@ -66,6 +77,9 @@ def get_product(product_id):
 
 @products_bp.route("", methods=["POST"])
 def create_product():
+    """
+    Create a new product
+    """
     data = request.get_json()
     required_fields = ["name", "description", "price", "category"]
     if not data or not all(field in data for field in required_fields):
@@ -105,6 +119,9 @@ def create_product():
 
 @products_bp.route("/<int:product_id>", methods=["PUT"])
 def update_product(product_id):
+    """
+    Update an existing product by its ID
+    """
     data = request.get_json()
     if not data:
         abort(400, description="No update data provided")
@@ -142,6 +159,9 @@ def update_product(product_id):
 
 @products_bp.route("/<int:product_id>", methods=["DELETE"])
 def delete_product(product_id):
+    """
+    Delete a product by its ID
+    """
     conn = get_db_connection()
     try:
         with conn.cursor() as cur:
