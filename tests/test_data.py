@@ -4,25 +4,23 @@ from app import app
 import psycopg2
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 
+
 class TestDataAPI(unittest.TestCase):
+
     def setUp(self):
         app.config['TESTING'] = True
         app.config['DB_NAME'] = 'test_db'
         app.config['DB_USER'] = 'postgres'
         app.config['DB_PASSWORD'] = 'nicepassword'
         app.config['DB_HOST'] = 'localhost'
-        
-        
+
         self.create_test_db()
-        
         self.init_test_data()
-        
         self.app = app.test_client()
-    
+
     def tearDown(self):
-        
         self.clean_test_data()
-    
+
     def create_test_db(self):
         """
         Create a test database
@@ -34,7 +32,7 @@ class TestDataAPI(unittest.TestCase):
         )
         conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
         cursor = conn.cursor()
-        
+
         try:
             cursor.execute("SELECT 1 FROM pg_database WHERE datname='test_db'")
             if not cursor.fetchone():
@@ -42,7 +40,7 @@ class TestDataAPI(unittest.TestCase):
         finally:
             cursor.close()
             conn.close()
-    
+
     def init_test_data(self):
         """
         Initialize the test database
@@ -53,7 +51,7 @@ class TestDataAPI(unittest.TestCase):
             password=app.config['DB_PASSWORD'],
             host=app.config['DB_HOST']
         )
-        
+
         with conn.cursor() as cur:
             cur.execute("""
                 CREATE TABLE IF NOT EXISTS users (
@@ -64,17 +62,17 @@ class TestDataAPI(unittest.TestCase):
                     phone VARCHAR
                 )
             """)
-            
+
             cur.execute("TRUNCATE TABLE users RESTART IDENTITY CASCADE")
-            
+
             cur.execute("""
                 INSERT INTO users (name, email, address, phone)
                 VALUES ('Test User', 'test@example.com', '123 Main St', '555-1234')
             """)
-            
+
             conn.commit()
         conn.close()
-    
+
     def clean_test_data(self):
         """
         Delete all test data
@@ -85,7 +83,7 @@ class TestDataAPI(unittest.TestCase):
             password=app.config['DB_PASSWORD'],
             host=app.config['DB_HOST']
         )
-        
+
         with conn.cursor() as cur:
             cur.execute("TRUNCATE TABLE users RESTART IDENTITY CASCADE")
             conn.commit()
@@ -97,7 +95,7 @@ class TestDataAPI(unittest.TestCase):
         """
         response = self.app.get('/data/users')
         self.assertEqual(response.status_code, 200)
-        
+
         data = json.loads(response.get_data(as_text=True))
         self.assertIsInstance(data, list)
         self.assertEqual(len(data), 1)
@@ -111,17 +109,18 @@ class TestDataAPI(unittest.TestCase):
             "name": "New User",
             "email": "new@example.com"
         }
-        
+
         response = self.app.post(
             '/data/users',
             data=json.dumps(new_user),
             content_type='application/json'
         )
         self.assertEqual(response.status_code, 201)
-        
+
         response = self.app.get('/data/users')
         data = json.loads(response.get_data(as_text=True))
         self.assertEqual(len(data), 2)
+
 
 if __name__ == '__main__':
     unittest.main()

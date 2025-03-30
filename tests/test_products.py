@@ -33,7 +33,7 @@ class TestProductsAPI(unittest.TestCase):
                     );
                     TRUNCATE TABLE products RESTART IDENTITY CASCADE;
                     INSERT INTO products (name, description, price, category)
-                    VALUES 
+                    VALUES
                         ('Test Product 1', 'Desc 1', 10.99, 'Category A'),
                         ('Test Product 2', 'Desc 2', 20.50, 'Category B');
                 """
