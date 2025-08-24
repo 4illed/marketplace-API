@@ -1,0 +1,29 @@
+version: '3'
+
+services:
+  db:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: nicepassword
+      POSTGRES_DB: mydb
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  app:
+    build: .
+    ports:
+      - "5000:5000"
+    environment:
+      DB_NAME: mydb
+      DB_USER: postgres
+      DB_PASSWORD: nicepassword
+      DB_HOST: db
+    depends_on:
+      - db
+
+volumes:
+  db_data:
